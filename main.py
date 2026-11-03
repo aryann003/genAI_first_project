@@ -6,7 +6,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
-
+from rag_pipeline import answer_question
 
 load_dotenv()
 
@@ -82,26 +82,19 @@ if st.button("Get Answer"):
 
         with st.spinner("Searching documents and generating answer..."):
 
-            docs = retriever.invoke(query)
-
-            context = "\n".join(
-                [doc.page_content for doc in docs]
+            result = answer_question(
+                retriever=retriever,
+                llm=llm,
+                prompt=prompt,
+                query=query
             )
 
-            final_prompt = prompt.invoke({
-                "context": context,
-                "question": query
-            })
-
-            response = llm.invoke(final_prompt)
-
         st.subheader("Answer")
-        st.write(response.content)
+        st.write(result["answer"])
 
-        # Show retrieved documents
         with st.expander("View retrieved documents"):
 
-            for i, doc in enumerate(docs):
+            for i, doc in enumerate(result["retrieved_documents"]):
                 st.markdown(f"**Document {i + 1}**")
                 st.write(doc.page_content)
 
